@@ -11,7 +11,8 @@ class CommandLineAPI(object):
         self.connection = sqlite3.connect( "/Users/Sensei/Library/GTD/GTD.db" )
         self.cursor = self.connection.cursor()
 
-    def ls( self ):
+    def ls( self, task=None, date=None ):
+        print( "Task = %s and date = %s" % (task, date) )
         for row in self.cursor.execute( "SELECT * FROM tasks" ):
             row_id = format( row[0], "<3" ) + "| "
             row_task = format( row[1], "<40" ) + "| "
@@ -24,11 +25,11 @@ class CommandLineAPI(object):
     def add( self, name, date ):
         if( date == None ):
             self.cursor.execute( "INSERT INTO tasks (name, due_date) \
-                                  VALUES (?, ?)", [name, datetime.now().strftime( "%d.%m.%Y" )] )
+                                  VALUES (?, ?)", [name, str( datetime.now().strftime( "%d.%m.%Y" ) )] )
         else:
             print( datetime.strptime( date, "%d.%m.%Y" ) )
             self.cursor.execute( "INSERT INTO tasks (name, due_date) \
-                                  VALUES (?, ?)", [ name, datetime.strptime( date, "%d.%m.%Y" ) ] )
+                                  VALUES (?, ?)", [name, date] )
         self.connection.commit()
         self.connection.close()
 
@@ -46,7 +47,12 @@ class CommandLineAPI(object):
         else:
             print( "Delete command aborted." )
 
-class Parser( ArgumentParser ):
+class CommandLineParser( ArgumentParser ):
+
+    def add_ls_subparser( self ):
+        ls = self.subparsers.add_parser( 'ls', help="Lists tasks" )
+        ls.add_argument( "-t", "--task", help="Task Name" )
+        ls.add_argument( "-d", "--date", help="Due date of task" )
 
     def add_add_subparser( self ):
         add = self.subparsers.add_parser( 'add', help="Adds a task" )
@@ -54,7 +60,7 @@ class Parser( ArgumentParser ):
         add.add_argument( "-d", "--date", help="Due date of task" )
 
     def add_remove_subparser( self ):
-        remove = subparsers.add_parser( 'remove', help="Removes a task" )
+        remove = self.subparsers.add_parser( 'remove', help="Removes a task" )
         remove.add_argument( "-i", "--id", required=True, type=int, help="Task ID" )
 
     def add_subparsers( self ):
@@ -62,21 +68,22 @@ class Parser( ArgumentParser ):
         self.add_remove_subparser()
         self.add_add_subparser()
 
-    def __init__( self, **kwargs ):
+    def __init__( self ):
         super().__init__()
-        if not isinstance( self, Parser ):
-            self.subparsers = super().add_subparsers( help="List of commands", dest="cmd" )
-            ls = self.subparsers.add_parser( 'ls', help="Lists tasks" )
-            ls.add_argument( "-t", "--task", help="Task Name" )
-            ls.add_argument( "-d", "--date", help="Due date of task" )
+        self.subparsers = super().add_subparsers( help="List of commands", dest="cmd" )
+        self.subparsers._parser_class = ArgumentParser
+        self.add_subparsers()
 
-parser = Parser()
-args = parser.parse_args()
-print( args )
+def main():
+    parser = CommandLineParser()
+    args = parser.parse_args()
+    print( args )
 
-if( args.cmd == "add" ):
-    CommandLineAPI().add( args.task, args.date )
-elif( args.cmd == "ls" ):
-    CommandLineAPI().ls()
-else:
-    CommandLineAPI().remove( args.id )
+    if( args.cmd == "add" ):
+        CommandLineAPI().add( args.task, args.date )
+    elif( args.cmd == "ls" ):
+        CommandLineAPI().ls( args.task, args.date )
+    else:
+        CommandLineAPI().remove( args.id )
+
+main()
