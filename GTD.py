@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 import sqlite3
 from datetime import datetime
 
+from parser import parser
+
 class CommandLineAPI(object):
     """Command-line GTD utility"""
 
@@ -13,7 +15,10 @@ class CommandLineAPI(object):
 
     def ls( self, task=None, date=None ):
         print( "Task = %s and date = %s" % (task, date) )
-        for row in self.cursor.execute( "SELECT * FROM tasks" ):
+        print( parser.prepareStatement( 
+            parser.StatementType.SELECT, ["task", "due_date"], [task,date] ) )
+        for row in self.cursor.execute( parser.prepareStatement( 
+            parser.StatementType.SELECT, ["task", "due_date"], [task,date] ) ):
             row_id = format( row[0], "<3" ) + "| "
             row_task = format( row[1], "<40" ) + "| "
             row_date = " "
@@ -33,19 +38,12 @@ class CommandLineAPI(object):
         self.connection.commit()
         self.connection.close()
 
-    def remove( self, id ):
-        self.cursor.execute( "SELECT * FROM tasks WHERE id=?", [id] )
-        print( self.cursor.fetchone() )
-        print( "This task will be deleted." )
-        print( "Are you sure you want to continue? (y/n)" )
-        choice = input()
-        if( choice == 'y' or choice == 'Y' ):
-            self.cursor.execute( "DELETE FROM tasks WHERE id=?", [id] )
-            self.connection.commit()
-            self.connection.close()
-            print( "Succesfully deleted" )
-        else:
-            print( "Delete command aborted." )
+    def remove( self, id=None, date=None ):
+        self.cursor.execute( parser.prepareStatement( 
+            parser.StatementType.DELETE, ["id", "due_date"], [id,date] ) )
+        self.connection.commit()
+        self.connection.close()
+        print( "Succesfully deleted" )
 
 class CommandLineParser( ArgumentParser ):
 
@@ -61,7 +59,7 @@ class CommandLineParser( ArgumentParser ):
 
     def add_remove_subparser( self ):
         remove = self.subparsers.add_parser( 'remove', help="Removes a task" )
-        remove.add_argument( "-i", "--id", required=True, type=int, help="Task ID" )
+        remove.add_argument( "-i", "--id", required=True, help="Task ID" )
 
     def add_subparsers( self ):
         self.add_ls_subparser()
