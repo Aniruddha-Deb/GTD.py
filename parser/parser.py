@@ -68,23 +68,29 @@ def prepareStatement( statement_type, params, tokens ):
     elif statement_type == StatementType.DELETE:
         stmt = "DELETE FROM tasks"
 
-    if not len( params ) == 0:
+    num_none = 0
+    for t in tokens:
+        if t == None:
+            num_none += 1
+
+    if not num_none == len(tokens) :
         stmt += " WHERE "
         i=0
         added=False
         for p in params:
             curr_token = tokenize( tokens[i] )
             if not curr_token == None:
-                print( curr_token )
                 if not i == 0 and added == True:
                     stmt += " AND "
                 stmt += p
                 if curr_token[0].type == TokenType.RELATIONAL_OP:
                     stmt += curr_token[0].value
-                if curr_token[1].type == TokenType.LITERAL:
-                    stmt += curr_token[1].value
-                elif curr_token[1].type == TokenType.STRING:
-                    stmt += "\"" + curr_token[1].value + "\""
+                    if curr_token[1].type == TokenType.LITERAL:
+                        stmt += curr_token[1].value
+                    elif curr_token[1].type == TokenType.STRING:
+                        stmt += "\"" + curr_token[1].value + "\""
+                elif curr_token[0].type == TokenType.LITERAL:
+                    stmt += "=" + curr_token[0].value
                 added=True
             i += 1
     return stmt

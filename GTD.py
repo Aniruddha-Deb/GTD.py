@@ -14,33 +14,35 @@ class CommandLineAPI(object):
         self.cursor = self.connection.cursor()
 
     def ls( self, task=None, date=None ):
-        print( "Task = %s and date = %s" % (task, date) )
-        print( parser.prepareStatement( 
-            parser.StatementType.SELECT, ["task", "due_date"], [task,date] ) )
-        for row in self.cursor.execute( parser.prepareStatement( 
-            parser.StatementType.SELECT, ["task", "due_date"], [task,date] ) ):
+        statement = parser.prepareStatement( 
+            parser.StatementType.SELECT, ["task", "due_date"], [task,date] )
+        records = self.cursor.execute( statement )
+
+        for row in records:
             row_id = format( row[0], "<3" ) + "| "
             row_task = format( row[1], "<40" ) + "| "
             row_date = " "
             if row[2] != None:
                 row_date = format( row[2], "<" ) 
             print( row_id + row_task + row_date )
+
         self.connection.close()
 
-    def add( self, name, date ):
+    def add( self, name=None, date=None ):
         if( date == None ):
+            today = str( datetime.now().strftime( "%d.%m.%Y" ) )
             self.cursor.execute( "INSERT INTO tasks (name, due_date) \
-                                  VALUES (?, ?)", [name, str( datetime.now().strftime( "%d.%m.%Y" ) )] )
+                                  VALUES (?, ?)", [name, today] )
         else:
-            print( datetime.strptime( date, "%d.%m.%Y" ) )
             self.cursor.execute( "INSERT INTO tasks (name, due_date) \
                                   VALUES (?, ?)", [name, date] )
         self.connection.commit()
         self.connection.close()
 
     def remove( self, id=None, date=None ):
-        self.cursor.execute( parser.prepareStatement( 
+        result = self.cursor.execute( parser.prepareStatement( 
             parser.StatementType.DELETE, ["id", "due_date"], [id,date] ) )
+        print( result )
         self.connection.commit()
         self.connection.close()
         print( "Succesfully deleted" )
@@ -59,7 +61,8 @@ class CommandLineParser( ArgumentParser ):
 
     def add_remove_subparser( self ):
         remove = self.subparsers.add_parser( 'remove', help="Removes a task" )
-        remove.add_argument( "-i", "--id", required=True, help="Task ID" )
+        remove.add_argument( "-i", "--id", help="Task ID" )
+        remove.add_argument( "-d", "--date", help="Due date" )
 
     def add_subparsers( self ):
         self.add_ls_subparser()
@@ -75,13 +78,12 @@ class CommandLineParser( ArgumentParser ):
 def main():
     parser = CommandLineParser()
     args = parser.parse_args()
-    print( args )
 
     if( args.cmd == "add" ):
         CommandLineAPI().add( args.task, args.date )
     elif( args.cmd == "ls" ):
         CommandLineAPI().ls( args.task, args.date )
     else:
-        CommandLineAPI().remove( args.id )
+        CommandLineAPI().remove( args.id, args.date )
 
 main()
