@@ -72,16 +72,19 @@ class CommandLineParser( ArgumentParser ):
 
     def parse_args( self ):
         (init_ns, remaining) = super().parse_known_args()
-        print( init_ns )
-        print( remaining )
+
+        if init_ns.cmd == "add":
+            self.processAddParams( init_ns, remaining )
+        elif init_ns.cmd == "ls":
+            self.processAddParams( init_ns, remaining )
+        elif init_ns.cmd == "del":
+
+        elif init_ns.cmd == "upd":
+
         if remaining:
             (ns, rem) = self.create_task_parser().parse_known_args( args=remaining, namespace=init_ns )
-            print( init_ns )
-            print( rem )
             if rem:
                 (n, r) = self.create_date_parser().parse_known_args( args=rem, namespace=ns )
-                print( init_ns )
-                print( r )
                 if r:
                     self.create_id_parser().parse_known_args( args=r, namespace=n )
         return init_ns
