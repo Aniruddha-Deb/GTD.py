@@ -3,6 +3,7 @@
 class Constants:
     CMD_PARAMS = [ "-t", "-d", "-i" ]
     COMPARATORS = [ "-lt", "-le", "-gt", "-ge", "-eq", "-ne" ]
+    CMDS = [ "add", "ls", "del", "upd" ]
 
 class Command( object ):
 
