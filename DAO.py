@@ -10,6 +10,7 @@ def execute( cmd ):
         raise Exception( "error: command '{}' is not a valid command".format( 
                          cmd.name ) )
 
+    # TODO use polymorphism here instead of if-else
     if cmd.name == "add":
         execute_add_command( cmd )
     elif cmd.name == "ls":
@@ -18,6 +19,8 @@ def execute( cmd ):
         execute_del_command( cmd )
     elif cmd.name == "upd":
         execute_upd_command( cmd )
+    elif cmd.name == "today":
+        execute_today_command( cmd )
 
 def execute_add_command( cmd ):
 
@@ -48,7 +51,6 @@ def sanitize_command_for_add( cmd ):
     if cmd.task_index != None:
         print( "warning: index parameter is not required in 'add'." )
 
-
 def execute_ls_command( cmd ):
     pass
 
@@ -56,4 +58,7 @@ def execute_del_command( cmd ):
     pass
 
 def execute_upd_command( cmd ):
+    pass
+
+def execute_today_command( cmd ):
     pass

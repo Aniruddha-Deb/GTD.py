@@ -3,7 +3,7 @@
 class Constants:
     CMD_PARAMS = [ "-t", "-d", "-i" ]
     COMPARATORS = [ "-lt", "-le", "-gt", "-ge", "-eq", "-ne" ]
-    CMDS = [ "add", "ls", "del", "upd" ]
+    CMDS = [ "add", "ls", "del", "upd", "today" ]
 
 class Command( object ):
 
@@ -73,14 +73,15 @@ def parse_numeric_param( args, i ):
 def parse( args ):
 
     if len( args ) < 2:
-        raise Exception( "Please specify a valid command from the following: add, ls, del, upd" )
-        
+        return Command( "today" )
+
     cmd = Command( args[1] )
     index = 2
     while index < len( args ):
         s = args[index]
         if s in Constants.CMD_PARAMS:
             index += 1
+            # TODO refactor this if-else chain with a design pattern
             if s == "-t":
                 (task_name, i) = parse_text_param( args, index )
                 cmd.task_name = task_name
