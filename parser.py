@@ -41,7 +41,7 @@ class NumericParameter( Parameter ):
     def __str__( self ):
         return "{}( comparator={} )".format( self.value, self.comparator )
 
-def parse_text_param( args, i ):
+def parse_task_param( args, i, cmd ):
     text_param = TextParameter( None, False, False )
 
     while i < len(args) and args[i] not in Constants.CMD_PARAMS:
@@ -54,7 +54,8 @@ def parse_text_param( args, i ):
         
         i += 1
     i -= 1
-    return text_param, i
+    cmd.task_name = text_param
+    return i
 
 def parse_numeric_param( args, i ):
 
@@ -68,7 +69,21 @@ def parse_numeric_param( args, i ):
         
         i += 1
     i -= 1
-    return numeric_param, i
+    return (numeric_param, i)
+
+def parse_date_param( args, i, cmd ):
+    (numeric_param, i) = parse_numeric_param( args, i )
+    cmd.task_date = numeric_param
+    return i
+
+def parse_id_param( args, i, cmd ):
+    (numeric_param, i) = parse_numeric_param( args, i )
+    cmd.task_id = numeric_param
+    return i
+
+parameter_parsers = { "-t":parse_task_param, 
+                      "-d":parse_date_param,
+                      "-i":parse_id_param }
 
 def parse( args ):
 
@@ -81,17 +96,7 @@ def parse( args ):
         s = args[index]
         if s in Constants.CMD_PARAMS:
             index += 1
-            # TODO refactor this if-else chain with a design pattern
-            if s == "-t":
-                (task_name, i) = parse_text_param( args, index )
-                cmd.task_name = task_name
-            elif s == "-d":
-                (task_date, i) = parse_numeric_param( args, index )
-                cmd.task_date = task_date
-            elif s == "-i":
-                (task_index, i) = parse_numeric_param( args, index )
-                cmd.task_index = task_index
-            index = i
+            index = parameter_parsers[s]( args, index, cmd )
         index += 1
 
     return cmd 
