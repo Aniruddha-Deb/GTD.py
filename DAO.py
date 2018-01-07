@@ -1,41 +1,56 @@
 #!/usr/local/bin/python3
 
-from datetime import datetime, timedelta
-
 from parser import Constants
 
 def execute_add_command( cmd ):
 
-    sanitize_command_for_add( cmd )
-    tdate = process_date( cmd.task_date )
+    print( "INSERT INTO tasks (name, due_date) VALUES ({}, {})".format( cmd.task_name.value, cmd.task_date.value ) )
 
-    print( "INSERT INTO tasks (name, due_date) VALUES ({}, {})".format( cmd.task_name.value, tdate ) )
-
-# TODO find an elegant way to sanitize the inputs
-def sanitize_command_for_add( cmd ):
-    if cmd.task_name == None or cmd.task_name.value == None:
-        raise Exception( "error: 'add' command requires a task name" )
-    if cmd.task_name.regexp == True or cmd.task_name.like == True:
-        print( "warning: regexp tag or like tag are not required in 'add'." )
-    if cmd.task_date != None and cmd.task_date.comparator != None:
-        print( "warning: comparator tag is not required in 'add'." )
-    if cmd.task_index != None:
-        print( "warning: index parameter is not required in 'add'." )
-
-def process_date( date ):
-    today = datetime.now().date()
-    if date == None or date.value == None:
-        return today.strftime( "%d.%m.%Y" )
-    elif date.value.startswith( "t" ):
-        if len( date.value ) > 2:
-            numDays = int( date[2:] )
-            today = eval( "today " + date[1] + "timedelta({})".format( numDays ) )
-        return today.strftime( "%d.%m.%Y" )
-    else:
-        return date
+op_map = { "-lt": " <",
+           "-le": " <=",
+           "-gt": " >",
+           "-ge": " >=",
+           "-eq": " =",
+           "-ne": " !=" }
 
 def execute_ls_command( cmd ):
-    pass
+
+    # TODO: Clean up this terrible piece of crap.
+    stmt = "SELECT * FROM tasks"
+    if cmd.task_name != None or cmd.task_date != None or cmd.task_index != None:
+        stmt += " WHERE"
+        added_task = False
+        if cmd.task_name != None:
+            stmt += " task"
+            added_task = True
+            if cmd.task_name.regexp == True:
+                stmt += " REGEXP"
+            elif cmd.task_name.like == True:
+                stmt += " LIKE"
+            else:
+                stmt += " ="
+            stmt += " ?"
+        if cmd.task_date != None :
+            if added_task:
+                stmt += " AND"
+            else:
+                added_task = True
+            stmt += " date"
+            if cmd.task_date.comparator != None:
+                stmt += op_map[cmd.task_date.comparator]
+            else:
+                stmt += " ="
+            stmt += " ?"
+        if cmd.task_index != None:
+            if added_task:
+                stmt += " AND"
+            stmt += " id"
+            if cmd.task_index.comparator != None:
+                stmt += op_map[cmd.task_index.comparator]
+            else:
+                stmt += " ="
+            stmt += " ?"
+    print( stmt )
 
 def execute_del_command( cmd ):
     pass
